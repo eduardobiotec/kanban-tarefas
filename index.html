@@ -1,0 +1,151 @@
+<!-- Arquivo: index.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meu Kanban de Tarefas</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .board {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 1200px;
+    }
+
+    .lane {
+      flex: 1;
+      min-width: 250px;
+      background-color: #ebecf0;
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .lane h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+      color: #42526e;
+    }
+
+    .task-list {
+      flex-grow: 1;
+      min-height: 100px;
+    }
+
+    .task {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+      cursor: grab;
+      box-shadow: 0 1px 3px rgba(9, 30, 66, 0.25);
+      transition: transform 0.1s ease;
+    }
+
+    .task:active {
+      cursor: grabbing;
+      transform: scale(1.03);
+    }
+
+    .add-task-btn {
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    .add-task-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <div class="lane" id="to-do">
+      <h2>A Fazer</h2>
+      <div class="task-list"></div>
+      <button class="add-task-btn">+ Adicionar Tarefa</button>
+    </div>
+
+    <div class="lane" id="in-progress">
+      <h2>Em Andamento</h2>
+      <div class="task-list"></div>
+    </div>
+
+    <div class="lane" id="done">
+      <h2>Concluído</h2>
+      <div class="task-list"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const lanes = document.querySelectorAll('.lane');
+      let draggedTask = null;
+
+      function createTask(text) {
+        const task = document.createElement('div');
+        task.className = 'task';
+        task.setAttribute('draggable', 'true');
+        task.textContent = text;
+
+        task.addEventListener('dragstart', (e) => {
+          draggedTask = task;
+          setTimeout(() => task.style.opacity = '0.5', 0);
+        });
+
+        task.addEventListener('dragend', () => {
+          task.style.opacity = '1';
+          draggedTask = null;
+        });
+
+        return task;
+      }
+
+      document.querySelectorAll('.add-task-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const taskText = prompt('Qual é a nova tarefa?');
+          if (taskText) {
+            const task = createTask(taskText);
+            const taskList = button.closest('.lane').querySelector('.task-list');
+            taskList.appendChild(task);
+          }
+        });
+      });
+
+      lanes.forEach(lane => {
+        lane.addEventListener('dragover', e => e.preventDefault());
+
+        lane.addEventListener('drop', e => {
+          e.preventDefault();
+          if (draggedTask) {
+            const taskList = lane.querySelector('.task-list');
+            taskList.appendChild(draggedTask);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
