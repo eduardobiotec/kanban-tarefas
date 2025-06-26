@@ -1,4 +1,3 @@
-<!-- Arquivo: index.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -59,6 +58,10 @@
       transition: transform 0.1s ease;
     }
 
+    .task:hover {
+      background-color: #f7f7f7;
+    }
+
     .task:active {
       cursor: grabbing;
       transform: scale(1.03);
@@ -77,6 +80,15 @@
 
     .add-task-btn:hover {
       background-color: #0056b3;
+    }
+
+    .task-title {
+      font-weight: bold;
+    }
+
+    .task-responsible {
+      font-size: 0.9em;
+      color: #555;
     }
   </style>
 </head>
@@ -104,13 +116,62 @@
       const lanes = document.querySelectorAll('.lane');
       let draggedTask = null;
 
-      function createTask(text) {
+      const saveData = () => {
+        const data = {};
+        lanes.forEach(lane => {
+          const id = lane.id;
+          data[id] = [];
+          lane.querySelectorAll('.task').forEach(task => {
+            const title = task.querySelector('.task-title').textContent;
+            const responsible = task.querySelector('.task-responsible').textContent.replace('Responsável: ', '');
+            data[id].push({ title, responsible });
+          });
+        });
+        localStorage.setItem('kanban-data', JSON.stringify(data));
+      };
+
+      const loadData = () => {
+        const data = JSON.parse(localStorage.getItem('kanban-data'));
+        if (!data) return;
+        for (const laneId in data) {
+          const lane = document.getElementById(laneId);
+          const taskList = lane.querySelector('.task-list');
+          data[laneId].forEach(taskData => {
+            const task = createTask(taskData.title, taskData.responsible);
+            taskList.appendChild(task);
+          });
+        }
+      };
+
+      function createTask(titleText, responsibleText = '') {
         const task = document.createElement('div');
         task.className = 'task';
         task.setAttribute('draggable', 'true');
-        task.textContent = text;
 
-        task.addEventListener('dragstart', (e) => {
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = titleText;
+
+        const responsible = document.createElement('div');
+        responsible.className = 'task-responsible';
+        responsible.textContent = responsibleText ? `Responsável: ${responsibleText}` : '';
+
+        task.appendChild(title);
+        task.appendChild(responsible);
+
+        task.addEventListener('dblclick', () => {
+          const newTitle = prompt('Editar tarefa:', title.textContent);
+          if (newTitle !== null) title.textContent = newTitle;
+
+          const newResponsible = prompt('Editar responsável:', responsibleText || '');
+          if (newResponsible !== null) {
+            responsibleText = newResponsible;
+            responsible.textContent = responsibleText ? `Responsável: ${responsibleText}` : '';
+          }
+          saveData();
+        });
+
+        task.addEventListener('dragstart', () => {
           draggedTask = task;
           setTimeout(() => task.style.opacity = '0.5', 0);
         });
@@ -127,25 +188,29 @@
         button.addEventListener('click', () => {
           const taskText = prompt('Qual é a nova tarefa?');
           if (taskText) {
-            const task = createTask(taskText);
+            const responsible = prompt('Quem será o responsável? (opcional)');
+            const task = createTask(taskText, responsible);
             const taskList = button.closest('.lane').querySelector('.task-list');
             taskList.appendChild(task);
+            saveData();
           }
         });
       });
 
       lanes.forEach(lane => {
         lane.addEventListener('dragover', e => e.preventDefault());
-
         lane.addEventListener('drop', e => {
           e.preventDefault();
           if (draggedTask) {
             const taskList = lane.querySelector('.task-list');
             taskList.appendChild(draggedTask);
+            saveData();
           }
         });
       });
+
+      loadData();
     });
   </script>
 </body>
-</html> 
+</html>
